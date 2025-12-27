@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'controls_screen.dart'; // Import the file we created above
 
 void main() {
   runApp(const ElechargeApp());
@@ -31,34 +32,29 @@ class _ElechargeAppState extends State<ElechargeApp> {
         brightness: Brightness.light,
         scaffoldBackgroundColor: const Color(0xFFF2F3F7),
         cardColor: Colors.white,
-        canvasColor: Colors.black, // Used for dark accents in light mode
+        canvasColor: Colors.black,
         primaryColor: const Color(0xFF6E4AFF),
         useMaterial3: true,
         fontFamily: 'SansSerif',
         iconTheme: const IconThemeData(color: Colors.black),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.black),
-        ),
+        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.black)),
       ),
       // 3. Define the Dark Theme
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF121212),
         cardColor: const Color(0xFF1E1E1E),
-        canvasColor: Colors.white, // Used for light accents in dark mode
+        canvasColor: Colors.white,
         primaryColor: const Color(0xFF6E4AFF),
         useMaterial3: true,
         fontFamily: 'SansSerif',
         iconTheme: const IconThemeData(color: Colors.white),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.white),
-        ),
+        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.white)),
       ),
       // 4. Bind the state to the themeMode
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      
-      // Pass the toggle callback to the dashboard
-      home: DashboardScreen(
+
+      home: MainNavigationScaffold(
         isDarkMode: isDarkMode,
         onThemeChanged: toggleTheme,
       ),
@@ -66,21 +62,92 @@ class _ElechargeAppState extends State<ElechargeApp> {
   }
 }
 
-class DashboardScreen extends StatefulWidget {
+// Wrapper for Bottom Navigation Logic
+class MainNavigationScaffold extends StatefulWidget {
   final bool isDarkMode;
   final Function(bool) onThemeChanged;
 
-  const DashboardScreen({
+  const MainNavigationScaffold({
     super.key,
     required this.isDarkMode,
     required this.onThemeChanged,
   });
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    // List of screens for navigation
+    final List<Widget> pages = [
+      // Index 0: The Dashboard
+      DashboardContent(
+        isDarkMode: widget.isDarkMode,
+        onThemeChanged: widget.onThemeChanged,
+      ),
+      // Index 1: The Controls Screen (Imported from controls_screen.dart)
+      const ControlsScreen(),
+      // Index 2: Placeholders for other tabs
+      const Center(child: Text("Map Screen Placeholder")),
+      const Center(child: Text("Profile Screen Placeholder")),
+    ];
+
+    return Scaffold(
+      body: pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed, // Needed for 4+ items
+        backgroundColor: Theme.of(context).cardColor,
+        selectedItemColor: const Color(0xFF6E4AFF),
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        elevation: 10,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Controls',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: 'Map'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Refactored Dashboard to be a component
+class DashboardContent extends StatefulWidget {
+  final bool isDarkMode;
+  final Function(bool) onThemeChanged;
+
+  const DashboardContent({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
+
+  @override
+  State<DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<DashboardContent> {
   // State to track vehicle type
   bool isElectric = true;
 
@@ -136,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTypeChanged: toggleVehicleType,
             ),
             const SizedBox(height: 20),
-            
+
             // Conditionally render content based on Vehicle Type
             if (isElectric) ...[
               // --- ELECTRIC COMPONENTS ---
@@ -150,7 +217,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              const QuickStatsRow(), 
+              const QuickStatsRow(),
               const SizedBox(height: 20),
               const ChargeHistoryCard(),
               const SizedBox(height: 20),
@@ -178,8 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const HybridAnalyticsCard(),
             ],
 
-            const SizedBox(height: 20),
-            const FooterCarSelector(),
+            // REMOVED: FooterCarSelector and "Park ev" text as requested.
             const SizedBox(height: 40),
           ],
         ),
@@ -200,12 +266,29 @@ class SideMenuDrawer extends StatelessWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: ListView(
         children: [
-          DrawerHeader(child: Center(child: Icon(Icons.bolt, size: 50, color: iconColor))),
-          ListTile(leading: Icon(Icons.recycling, color: iconColor), title: Text("Recycle", style: TextStyle(color: iconColor))),
-          ListTile(leading: Icon(Icons.electric_bolt, color: iconColor), title: Text("Energy", style: TextStyle(color: iconColor))),
-          ListTile(leading: Icon(Icons.threed_rotation, color: iconColor), title: Text("360 View", style: TextStyle(color: iconColor))),
-          ListTile(leading: Icon(Icons.near_me, color: iconColor), title: Text("Navigation", style: TextStyle(color: iconColor))),
-          ListTile(leading: Icon(Icons.refresh, color: iconColor), title: Text("Sync", style: TextStyle(color: iconColor))),
+          DrawerHeader(
+            child: Center(child: Icon(Icons.bolt, size: 50, color: iconColor)),
+          ),
+          ListTile(
+            leading: Icon(Icons.recycling, color: iconColor),
+            title: Text("Recycle", style: TextStyle(color: iconColor)),
+          ),
+          ListTile(
+            leading: Icon(Icons.electric_bolt, color: iconColor),
+            title: Text("Energy", style: TextStyle(color: iconColor)),
+          ),
+          ListTile(
+            leading: Icon(Icons.threed_rotation, color: iconColor),
+            title: Text("360 View", style: TextStyle(color: iconColor)),
+          ),
+          ListTile(
+            leading: Icon(Icons.near_me, color: iconColor),
+            title: Text("Navigation", style: TextStyle(color: iconColor)),
+          ),
+          ListTile(
+            leading: Icon(Icons.refresh, color: iconColor),
+            title: Text("Sync", style: TextStyle(color: iconColor)),
+          ),
         ],
       ),
     );
@@ -217,9 +300,9 @@ class VehicleTypeSelector extends StatelessWidget {
   final Function(bool) onTypeChanged;
 
   const VehicleTypeSelector({
-    super.key, 
-    required this.isElectric, 
-    required this.onTypeChanged
+    super.key,
+    required this.isElectric,
+    required this.onTypeChanged,
   });
 
   @override
@@ -244,15 +327,23 @@ class VehicleTypeSelector extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isElectric ? cardColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: isElectric ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
+                boxShadow: isElectric
+                    ? [
+                        const BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Text(
-                "Electric vehicle", 
+                "Electric vehicle",
                 style: TextStyle(
-                  fontWeight: isElectric ? FontWeight.bold : FontWeight.normal, 
-                  fontSize: 12, 
-                  color: isElectric ? textColor : Colors.grey
-                )
+                  fontWeight: isElectric ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 12,
+                  color: isElectric ? textColor : Colors.grey,
+                ),
               ),
             ),
           ),
@@ -261,19 +352,27 @@ class VehicleTypeSelector extends StatelessWidget {
           GestureDetector(
             onTap: () => onTypeChanged(false),
             child: Container(
-               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 color: !isElectric ? cardColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: !isElectric ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
+                boxShadow: !isElectric
+                    ? [
+                        const BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Text(
-                "Hybrid vehicle", 
+                "Hybrid vehicle",
                 style: TextStyle(
-                  fontWeight: !isElectric ? FontWeight.bold : FontWeight.normal, 
-                  fontSize: 12, 
-                  color: !isElectric ? textColor : Colors.grey
-                )
+                  fontWeight: !isElectric ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 12,
+                  color: !isElectric ? textColor : Colors.grey,
+                ),
               ),
             ),
           ),
@@ -296,7 +395,9 @@ class CarImageCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         color: Colors.black,
         image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'),
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+          ),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(Colors.purpleAccent, BlendMode.overlay),
         ),
@@ -304,11 +405,20 @@ class CarImageCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            top: 20, left: 20,
-            child: Text(imageParams, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            top: 20,
+            left: 20,
+            child: Text(
+              imageParams,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           Positioned(
-            bottom: 16, right: 16,
+            bottom: 16,
+            right: 16,
             child: Row(
               children: [
                 _circleBtn(Icons.remove),
@@ -316,7 +426,7 @@ class CarImageCard extends StatelessWidget {
                 _circleBtn(Icons.add),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -324,50 +434,13 @@ class CarImageCard extends StatelessWidget {
 
   Widget _circleBtn(IconData icon) {
     return Container(
-      width: 32, height: 32,
-      decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
-      child: Icon(icon, color: Colors.white, size: 16),
-    );
-  }
-}
-
-class FooterCarSelector extends StatelessWidget {
-  const FooterCarSelector({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-
-    return Column(
-      children: [
-        Text("Park ev\nautomatically\nvol.1", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _carIcon(context, Icons.directions_car, true),
-            const SizedBox(width: 10),
-            _carIcon(context, Icons.local_shipping, false),
-            const SizedBox(width: 10),
-            _carIcon(context, Icons.time_to_leave, false),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _carIcon(BuildContext context, IconData icon, bool isSelected) {
-    final cardColor = Theme.of(context).cardColor;
-    final iconColor = Theme.of(context).iconTheme.color;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        border: isSelected ? Border.all(color: Colors.purple, width: 2) : null,
-        borderRadius: BorderRadius.circular(16)
+      width: 32,
+      height: 32,
+      decoration: const BoxDecoration(
+        color: Colors.white24,
+        shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: iconColor),
+      child: Icon(icon, color: Colors.white, size: 16),
     );
   }
 }
@@ -380,20 +453,23 @@ class ChargingRoutineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Charging\nRoutine", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              Text(
+                "Charging\nRoutine",
+                style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+              ),
               const Icon(Icons.menu, size: 16, color: Colors.grey),
             ],
           ),
@@ -408,7 +484,7 @@ class ChargingRoutineCard extends StatelessWidget {
               _miniDonut(Colors.blue, "+69", textColor),
               _miniDonut(Colors.purpleAccent, "+58", textColor),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -421,7 +497,14 @@ class ChargingRoutineCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-          Text(val, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColor)),
+          Text(
+            val,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
         ],
       ),
     );
@@ -429,12 +512,25 @@ class ChargingRoutineCard extends StatelessWidget {
 
   Widget _miniDonut(Color color, String text, Color textColor) {
     return SizedBox(
-      width: 30, height: 30,
+      width: 30,
+      height: 30,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CircularProgressIndicator(value: 0.7, color: color, strokeWidth: 3, backgroundColor: color.withOpacity(0.2)),
-          Text(text, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: textColor)),
+          CircularProgressIndicator(
+            value: 0.7,
+            color: color,
+            strokeWidth: 3,
+            backgroundColor: color.withOpacity(0.2),
+          ),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
         ],
       ),
     );
@@ -451,18 +547,22 @@ class VoltageDialCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
-          const Align(alignment: Alignment.centerRight, child: Icon(Icons.more_horiz, size: 16, color: Colors.grey)),
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Icon(Icons.more_horiz, size: 16, color: Colors.grey),
+          ),
           const SizedBox(height: 10),
           Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 90, height: 90,
+                width: 90,
+                height: 90,
                 child: CircularProgressIndicator(
                   value: 0.6,
                   strokeWidth: 8,
@@ -473,14 +573,27 @@ class VoltageDialCard extends StatelessWidget {
               ),
               Column(
                 children: [
-                  const Text("VOLTAGE", style: TextStyle(fontSize: 8, color: Colors.grey)),
-                  Text("250\u1D5B", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                  const Text(
+                    "VOLTAGE",
+                    style: TextStyle(fontSize: 8, color: Colors.grey),
+                  ),
+                  Text(
+                    "250\u1D5B",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          const Text("240V", style: TextStyle(color: Colors.grey, fontSize: 10)),
+          const Text(
+            "240V",
+            style: TextStyle(color: Colors.grey, fontSize: 10),
+          ),
         ],
       ),
     );
@@ -495,33 +608,75 @@ class QuickStatsRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _statItem(context, Icons.check, Colors.purpleAccent, "-120v", "Less than last week"),
-        _statItem(context, Icons.battery_charging_full, Colors.blue, "16 times", "This month"),
-        _statItem(context, Icons.text_fields, Colors.purple, "+17%", "Last week"),
+        _statItem(
+          context,
+          Icons.check,
+          Colors.purpleAccent,
+          "-120v",
+          "Less than last week",
+        ),
+        _statItem(
+          context,
+          Icons.battery_charging_full,
+          Colors.blue,
+          "16 times",
+          "This month",
+        ),
+        _statItem(
+          context,
+          Icons.text_fields,
+          Colors.purple,
+          "+17%",
+          "Last week",
+        ),
       ],
     );
   }
 
-  Widget _statItem(BuildContext context, IconData icon, Color color, String bigText, String subText) {
+  Widget _statItem(
+    BuildContext context,
+    IconData icon,
+    Color color,
+    String bigText,
+    String subText,
+  ) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, 
-          borderRadius: BorderRadius.circular(16)
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Icon(icon, color: Colors.white, size: 14),
             ),
             const SizedBox(height: 8),
-            Text(bigText, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.bodyMedium!.color)),
-            Text(subText, style: const TextStyle(fontSize: 9, color: Colors.grey, overflow: TextOverflow.ellipsis), maxLines: 1),
+            Text(
+              bigText,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
+              ),
+            ),
+            Text(
+              subText,
+              style: const TextStyle(
+                fontSize: 9,
+                color: Colors.grey,
+                overflow: TextOverflow.ellipsis,
+              ),
+              maxLines: 1,
+            ),
           ],
         ),
       ),
@@ -535,37 +690,51 @@ class ChargeHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       height: 180,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Charge\nHistory", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+              Text(
+                "Charge\nHistory",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: textColor,
+                ),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text("insights", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  Text("\$42.75", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                  const Text(
+                    "insights",
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  Text(
+                    "\$42.75",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           const Spacer(),
           SizedBox(
             height: 60,
             width: double.infinity,
-            child: CustomPaint(
-              painter: SimpleWavePainter(color: textColor!),
-            ),
+            child: CustomPaint(painter: SimpleWavePainter(color: textColor!)),
           ),
           const SizedBox(height: 10),
           const Row(
@@ -576,7 +745,7 @@ class ChargeHistoryCard extends StatelessWidget {
               Text("Tue", style: TextStyle(fontSize: 10, color: Colors.grey)),
               Text("Wed", style: TextStyle(fontSize: 10, color: Colors.grey)),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -596,16 +765,32 @@ class SimpleWavePainter extends CustomPainter {
 
     Path path = Path();
     path.moveTo(0, size.height * 0.8);
-    path.quadraticBezierTo(size.width * 0.25, size.height, size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      size.height,
+      size.width * 0.5,
+      size.height * 0.5,
+    );
     path.quadraticBezierTo(size.width * 0.75, 0, size.width, size.height * 0.4);
 
     canvas.drawPath(path, paint);
 
-    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.28), 4, Paint()..color = Colors.blue);
+    canvas.drawCircle(
+      Offset(size.width * 0.75, size.height * 0.28),
+      4,
+      Paint()..color = Colors.blue,
+    );
 
     TextPainter tp = TextPainter(
-      text: TextSpan(text: "+350 kWh", style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-      textDirection: TextDirection.ltr
+      text: TextSpan(
+        text: "+350 kWh",
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
     );
     tp.layout();
     tp.paint(canvas, Offset(size.width * 0.65, 0));
@@ -620,32 +805,52 @@ class ChargingPowerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : const Color(0xFFEBEBF0);
+    final bgColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF2C2C2E)
+        : const Color(0xFFEBEBF0);
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    final circleTextColor = Theme.of(context).canvasColor; 
+    final circleTextColor = Theme.of(context).canvasColor;
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Charging\nPower »", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w300, color: textColor)),
-              const Text("J1772\nL.1-2", textAlign: TextAlign.right, style: TextStyle(color: Colors.grey)),
+              Text(
+                "Charging\nPower »",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w300,
+                  color: textColor,
+                ),
+              ),
+              const Text(
+                "J1772\nL.1-2",
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 5),
-          const Text("Power Output 19.2 kW", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          const Text(
+            "Power Output 19.2 kW",
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
           const SizedBox(height: 20),
           Center(
             child: Stack(
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 140, height: 140,
+                  width: 140,
+                  height: 140,
                   child: CircularProgressIndicator(
                     value: 0.75,
                     strokeWidth: 12,
@@ -657,14 +862,40 @@ class ChargingPowerSection extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("Level 2", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    const Text("10 to 20 miles", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text("240V", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
+                    const Text(
+                      "Level 2",
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                    const Text(
+                      "10 to 20 miles",
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                    Text(
+                      "240V",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
                   ],
                 ),
-                const Positioned(top: 10, child: Icon(Icons.bolt, size: 16, color: Colors.grey)),
-                const Positioned(left: 10, child: Icon(Icons.ev_station, size: 16, color: Colors.grey)),
-                const Positioned(right: 10, child: Icon(Icons.electrical_services, size: 16, color: Colors.grey)),
+                const Positioned(
+                  top: 10,
+                  child: Icon(Icons.bolt, size: 16, color: Colors.grey),
+                ),
+                const Positioned(
+                  left: 10,
+                  child: Icon(Icons.ev_station, size: 16, color: Colors.grey),
+                ),
+                const Positioned(
+                  right: 10,
+                  child: Icon(
+                    Icons.electrical_services,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
           ),
@@ -678,10 +909,17 @@ class ChargingPowerSection extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.only(top: 10),
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: circleTextColor, shape: BoxShape.circle),
-              child: Icon(Icons.arrow_outward, color: Theme.of(context).cardColor, size: 16),
+              decoration: BoxDecoration(
+                color: circleTextColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.arrow_outward,
+                color: Theme.of(context).cardColor,
+                size: 16,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -694,36 +932,41 @@ class PowerAnalyticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    final buttonColor = Theme.of(context).canvasColor; 
+    // Removed Button Color as button is removed
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Power Analytics", style: TextStyle(fontSize: 12, color: textColor)),
+        Text(
+          "Power Analytics",
+          style: TextStyle(fontSize: 12, color: textColor),
+        ),
         const SizedBox(height: 5),
-        Text("480V DC", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-        const Text("● 60 to 80 miles", style: TextStyle(color: Colors.purple, fontSize: 12)),
+        Text(
+          "480V DC",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const Text(
+          "● 60 to 80 miles",
+          style: TextStyle(color: Colors.purple, fontSize: 12),
+        ),
         const SizedBox(height: 15),
         Stack(
           children: [
             Container(height: 10, color: Colors.grey.shade300),
             Container(height: 10, width: 250, color: Colors.purple),
-            Container(height: 10, width: 120, color: Colors.cyanAccent.withOpacity(0.5)),
+            Container(
+              height: 10,
+              width: 120,
+              color: Colors.cyanAccent.withOpacity(0.5),
+            ),
           ],
         ),
-        const SizedBox(height: 20),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(30)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("read more", style: TextStyle(color: Theme.of(context).cardColor)),
-              Icon(Icons.double_arrow, color: Theme.of(context).cardColor, size: 16)
-            ],
-          ),
-        )
+        // REMOVED "Read More" button here
       ],
     );
   }
@@ -737,20 +980,23 @@ class HybridFuelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Fuel & \nBattery", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              Text(
+                "Fuel & \nBattery",
+                style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+              ),
               const Icon(Icons.local_gas_station, size: 16, color: Colors.grey),
             ],
           ),
@@ -762,12 +1008,12 @@ class HybridFuelCard extends StatelessWidget {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-               // Fuel Icon
+              // Fuel Icon
               Icon(Icons.water_drop, color: Colors.amber, size: 24),
               // Battery Icon
               Icon(Icons.battery_charging_full, color: Colors.green, size: 24),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -780,7 +1026,14 @@ class HybridFuelCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-          Text(val, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColor)),
+          Text(
+            val,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
         ],
       ),
     );
@@ -797,18 +1050,22 @@ class FuelGaugeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
-          const Align(alignment: Alignment.centerRight, child: Icon(Icons.more_horiz, size: 16, color: Colors.grey)),
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Icon(Icons.more_horiz, size: 16, color: Colors.grey),
+          ),
           const SizedBox(height: 10),
           Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 90, height: 90,
+                width: 90,
+                height: 90,
                 child: CircularProgressIndicator(
                   value: 0.8,
                   strokeWidth: 8,
@@ -819,14 +1076,27 @@ class FuelGaugeCard extends StatelessWidget {
               ),
               Column(
                 children: [
-                  const Text("FUEL", style: TextStyle(fontSize: 8, color: Colors.grey)),
-                  Text("80%", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                  const Text(
+                    "FUEL",
+                    style: TextStyle(fontSize: 8, color: Colors.grey),
+                  ),
+                  Text(
+                    "80%",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          const Text("Regular Unleaded", style: TextStyle(color: Colors.grey, fontSize: 10)),
+          const Text(
+            "Regular Unleaded",
+            style: TextStyle(color: Colors.grey, fontSize: 10),
+          ),
         ],
       ),
     );
@@ -842,32 +1112,62 @@ class HybridQuickStatsRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _statItem(context, Icons.oil_barrel, Colors.amber, "20%", "Oil Life"),
-        _statItem(context, Icons.speed, Colors.redAccent, "42psi", "Tire Pressure"),
+        _statItem(
+          context,
+          Icons.speed,
+          Colors.redAccent,
+          "42psi",
+          "Tire Pressure",
+        ),
         _statItem(context, Icons.eco, Colors.green, "96", "Eco Score"),
       ],
     );
   }
 
-  Widget _statItem(BuildContext context, IconData icon, Color color, String bigText, String subText) {
+  Widget _statItem(
+    BuildContext context,
+    IconData icon,
+    Color color,
+    String bigText,
+    String subText,
+  ) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, 
-          borderRadius: BorderRadius.circular(16)
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Icon(icon, color: Colors.white, size: 14),
             ),
             const SizedBox(height: 8),
-            Text(bigText, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.bodyMedium!.color)),
-            Text(subText, style: const TextStyle(fontSize: 9, color: Colors.grey, overflow: TextOverflow.ellipsis), maxLines: 1),
+            Text(
+              bigText,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Theme.of(context).textTheme.bodyMedium!.color,
+              ),
+            ),
+            Text(
+              subText,
+              style: const TextStyle(
+                fontSize: 9,
+                color: Colors.grey,
+                overflow: TextOverflow.ellipsis,
+              ),
+              maxLines: 1,
+            ),
           ],
         ),
       ),
@@ -881,28 +1181,44 @@ class FuelHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       height: 180,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, 
-        borderRadius: BorderRadius.circular(24)
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Fuel\nExpenses", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+              Text(
+                "Fuel\nExpenses",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: textColor,
+                ),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text("This Month", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  Text("\$85.50", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                  const Text(
+                    "This Month",
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  Text(
+                    "\$85.50",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           const Spacer(),
@@ -910,12 +1226,10 @@ class FuelHistoryCard extends StatelessWidget {
           SizedBox(
             height: 60,
             width: double.infinity,
-            child: CustomPaint(
-              painter: SimpleWavePainter(color: Colors.amber),
-            ),
+            child: CustomPaint(painter: SimpleWavePainter(color: Colors.amber)),
           ),
           const SizedBox(height: 10),
-           const Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Wk 1", style: TextStyle(fontSize: 10, color: Colors.grey)),
@@ -923,7 +1237,7 @@ class FuelHistoryCard extends StatelessWidget {
               Text("Wk 3", style: TextStyle(fontSize: 10, color: Colors.grey)),
               Text("Wk 4", style: TextStyle(fontSize: 10, color: Colors.grey)),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -935,32 +1249,52 @@ class EnginePowerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : const Color(0xFFEBEBF0);
+    final bgColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF2C2C2E)
+        : const Color(0xFFEBEBF0);
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    final circleTextColor = Theme.of(context).canvasColor; 
+    final circleTextColor = Theme.of(context).canvasColor;
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Engine\nOutput »", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w300, color: textColor)),
-              const Text("2.0L\n4-Cyl", textAlign: TextAlign.right, style: TextStyle(color: Colors.grey)),
+              Text(
+                "Engine\nOutput »",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w300,
+                  color: textColor,
+                ),
+              ),
+              const Text(
+                "2.0L\n4-Cyl",
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 5),
-          const Text("Combined 204 hp", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          const Text(
+            "Combined 204 hp",
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
           const SizedBox(height: 20),
           Center(
             child: Stack(
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 140, height: 140,
+                  width: 140,
+                  height: 140,
                   child: CircularProgressIndicator(
                     value: 0.4,
                     strokeWidth: 12,
@@ -972,9 +1306,22 @@ class EnginePowerSection extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("RPM", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    const Text("Driving", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text("2.4k", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
+                    const Text(
+                      "RPM",
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                    const Text(
+                      "Driving",
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                    Text(
+                      "2.4k",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -985,15 +1332,22 @@ class EnginePowerSection extends StatelessWidget {
             "Internal Combustion Engine active. Regenerative braking enabled.",
             style: TextStyle(color: Colors.grey, height: 1.5),
           ),
-           Align(
+          Align(
             alignment: Alignment.bottomRight,
             child: Container(
               margin: const EdgeInsets.only(top: 10),
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: circleTextColor, shape: BoxShape.circle),
-              child: Icon(Icons.arrow_outward, color: Theme.of(context).cardColor, size: 16),
+              decoration: BoxDecoration(
+                color: circleTextColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.arrow_outward,
+                color: Theme.of(context).cardColor,
+                size: 16,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -1006,36 +1360,40 @@ class HybridAnalyticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).textTheme.bodyMedium!.color;
-    final buttonColor = Theme.of(context).canvasColor; 
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Drive Analytics", style: TextStyle(fontSize: 12, color: textColor)),
+        Text(
+          "Drive Analytics",
+          style: TextStyle(fontSize: 12, color: textColor),
+        ),
         const SizedBox(height: 5),
-        Text("Hybrid Mode", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-        const Text("● Efficiency 48 MPG", style: TextStyle(color: Colors.green, fontSize: 12)),
+        Text(
+          "Hybrid Mode",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const Text(
+          "● Efficiency 48 MPG",
+          style: TextStyle(color: Colors.green, fontSize: 12),
+        ),
         const SizedBox(height: 15),
         Stack(
           children: [
             Container(height: 10, color: Colors.grey.shade300),
             Container(height: 10, width: 280, color: Colors.green),
-            Container(height: 10, width: 100, color: Colors.amber.withOpacity(0.5)),
+            Container(
+              height: 10,
+              width: 100,
+              color: Colors.amber.withOpacity(0.5),
+            ),
           ],
         ),
-        const SizedBox(height: 20),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(30)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("full report", style: TextStyle(color: Theme.of(context).cardColor)),
-              Icon(Icons.double_arrow, color: Theme.of(context).cardColor, size: 16)
-            ],
-          ),
-        )
+        // REMOVED "Full Report" button here
       ],
     );
   }

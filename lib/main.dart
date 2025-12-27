@@ -1,308 +1,1042 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ElechargeApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ElechargeApp extends StatefulWidget {
+  const ElechargeApp({super.key});
+
+  @override
+  State<ElechargeApp> createState() => _ElechargeAppState();
+}
+
+class _ElechargeAppState extends State<ElechargeApp> {
+  // 1. State variable to track the theme
+  bool isDarkMode = false;
+
+  void toggleTheme(bool value) {
+    setState(() {
+      isDarkMode = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF030810),
+      title: 'Elecharge Dashboard',
+      // 2. Define the Light Theme
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF2F3F7),
+        cardColor: Colors.white,
+        canvasColor: Colors.black, // Used for dark accents in light mode
+        primaryColor: const Color(0xFF6E4AFF),
+        useMaterial3: true,
+        fontFamily: 'SansSerif',
+        iconTheme: const IconThemeData(color: Colors.black),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.black),
+        ),
       ),
-      home: const ControlsScreen(),
+      // 3. Define the Dark Theme
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        cardColor: const Color(0xFF1E1E1E),
+        canvasColor: Colors.white, // Used for light accents in dark mode
+        primaryColor: const Color(0xFF6E4AFF),
+        useMaterial3: true,
+        fontFamily: 'SansSerif',
+        iconTheme: const IconThemeData(color: Colors.white),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.white),
+        ),
+      ),
+      // 4. Bind the state to the themeMode
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      
+      // Pass the toggle callback to the dashboard
+      home: DashboardScreen(
+        isDarkMode: isDarkMode,
+        onThemeChanged: toggleTheme,
+      ),
     );
   }
 }
 
-class ControlsScreen extends StatefulWidget {
-  const ControlsScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  final bool isDarkMode;
+  final Function(bool) onThemeChanged;
+
+  const DashboardScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
 
   @override
-  State<ControlsScreen> createState() => _ControlsScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _ControlsScreenState extends State<ControlsScreen> {
-  // State variables for the toggles
-  bool isEngineOn = true;
-  bool isClimateOn = false;
-  bool isTrunkOpen = false;
-  bool isDoorsOpen = true;
+class _DashboardScreenState extends State<DashboardScreen> {
+  // State to track vehicle type
+  bool isElectric = true;
+
+  void toggleVehicleType(bool electric) {
+    setState(() {
+      isElectric = electric;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Screen dimensions
-    final size = MediaQuery.of(context).size;
-    final double padding = 24.0;
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    final iconColor = Theme.of(context).iconTheme.color;
 
     return Scaffold(
-      body: SafeArea(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Icon(Icons.bolt, color: iconColor, size: 30),
+        title: Text(
+          "Car Dashboard Display",
+          style: TextStyle(
+            color: textColor,
+            fontSize: 16,
+            height: 1.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          Switch(
+            value: widget.isDarkMode,
+            onChanged: widget.onThemeChanged,
+            activeColor: const Color(0xFF6E4AFF),
+          ),
+          const CircleAvatar(
+            backgroundColor: Color(0xFF6E4AFF),
+            radius: 16,
+            child: Icon(Icons.person, size: 18, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      drawer: SideMenuDrawer(iconColor: iconColor!),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        physics: const BouncingScrollPhysics(),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SCROLLABLE CONTENT (Title + Car + Controls) ---
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: padding),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Header
-                    const Text(
-                      "Controls",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // --- CAR GRAPHIC SECTION ---
-                    Center(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // 1. Background Glow
-                          Container(
-                            width: size.width * 0.7,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF00F0FF,
-                                  ).withOpacity(0.15),
-                                  blurRadius: 100,
-                                  spreadRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                          // 2. Car Image
-                          // NOTE: Replace NetworkImage with Image.asset('assets/car_top_view.png')
-                          // I am using a placeholder icon here for demonstration.
-                          SizedBox(
-                            height: 400,
-                            width: size.width * 0.8,
-                            child: Image.asset(
-                              'assets/car_top_view.png', // Make sure this filename matches exactly what is in your folder
-                              fit: BoxFit.contain,
-                              //color: const Color(0xFF00F0FF),
-                              //colorBlendMode: BlendMode.srcIn,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // --- CONTROLS GRID ---
-                    // Row 1
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ControlTile(
-                            label: "Engine",
-                            status: isEngineOn ? "started" : "off",
-                            isOn: isEngineOn,
-                            icon: Icons.power_settings_new,
-                            onTap: () =>
-                                setState(() => isEngineOn = !isEngineOn),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ControlTile(
-                            label: "Climate",
-                            status: isClimateOn ? "on" : "off",
-                            isOn: isClimateOn,
-                            icon: Icons.thermostat,
-                            onTap: () =>
-                                setState(() => isClimateOn = !isClimateOn),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Row 2
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ControlTile(
-                            label: "Trunk",
-                            status: isTrunkOpen ? "opened" : "closed",
-                            isOn: isTrunkOpen,
-                            icon: Icons
-                                .directions_car, // Use specific trunk icon if available
-                            onTap: () =>
-                                setState(() => isTrunkOpen = !isTrunkOpen),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ControlTile(
-                            label: "Doors",
-                            status: isDoorsOpen ? "opened" : "closed",
-                            isOn: isDoorsOpen,
-                            icon: Icons.lock_open,
-                            onTap: () =>
-                                setState(() => isDoorsOpen = !isDoorsOpen),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40), // Spacing at bottom
-                  ],
-                ),
-              ),
+            // Updated Selector with callback
+            VehicleTypeSelector(
+              isElectric: isElectric,
+              onTypeChanged: toggleVehicleType,
             ),
-
-            // --- BOTTOM NAVIGATION BAR ---
-            // Fixed at bottom
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF030810).withOpacity(0.0),
-                    const Color(0xFF030810),
-                  ],
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 20),
+            
+            // Conditionally render content based on Vehicle Type
+            if (isElectric) ...[
+              // --- ELECTRIC COMPONENTS ---
+              const CarImageCard(imageParams: "3.3 kW\nto 19.2 kW"),
+              const SizedBox(height: 20),
+              const Row(
                 children: [
-                  _buildNavItem(Icons.directions_car, true),
-                  _buildNavItem(Icons.map_outlined, false),
-                  _buildNavItem(Icons.person_outline, false),
-                  _buildNavItem(Icons.menu, false),
+                  Expanded(child: ChargingRoutineCard()),
+                  SizedBox(width: 16),
+                  Expanded(child: VoltageDialCard()),
                 ],
               ),
-            ),
+              const SizedBox(height: 20),
+              const QuickStatsRow(), 
+              const SizedBox(height: 20),
+              const ChargeHistoryCard(),
+              const SizedBox(height: 20),
+              const ChargingPowerSection(),
+              const SizedBox(height: 20),
+              const PowerAnalyticsCard(),
+            ] else ...[
+              // --- HYBRID COMPONENTS ---
+              const CarImageCard(imageParams: "45 MPG\nHybrid Drive"),
+              const SizedBox(height: 20),
+              const Row(
+                children: [
+                  Expanded(child: HybridFuelCard()),
+                  SizedBox(width: 16),
+                  Expanded(child: FuelGaugeCard()),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const HybridQuickStatsRow(),
+              const SizedBox(height: 20),
+              const FuelHistoryCard(),
+              const SizedBox(height: 20),
+              const EnginePowerSection(),
+              const SizedBox(height: 20),
+              const HybridAnalyticsCard(),
+            ],
+
+            const SizedBox(height: 20),
+            const FooterCarSelector(),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildNavItem(IconData icon, bool isActive) {
-    return Icon(
-      icon,
-      size: 28,
-      color: isActive ? const Color(0xFF00F0FF) : Colors.grey.withOpacity(0.5),
+// --- SHARED & NAVIGATION WIDGETS ---
+
+class SideMenuDrawer extends StatelessWidget {
+  final Color iconColor;
+  const SideMenuDrawer({super.key, required this.iconColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      child: ListView(
+        children: [
+          DrawerHeader(child: Center(child: Icon(Icons.bolt, size: 50, color: iconColor))),
+          ListTile(leading: Icon(Icons.recycling, color: iconColor), title: Text("Recycle", style: TextStyle(color: iconColor))),
+          ListTile(leading: Icon(Icons.electric_bolt, color: iconColor), title: Text("Energy", style: TextStyle(color: iconColor))),
+          ListTile(leading: Icon(Icons.threed_rotation, color: iconColor), title: Text("360 View", style: TextStyle(color: iconColor))),
+          ListTile(leading: Icon(Icons.near_me, color: iconColor), title: Text("Navigation", style: TextStyle(color: iconColor))),
+          ListTile(leading: Icon(Icons.refresh, color: iconColor), title: Text("Sync", style: TextStyle(color: iconColor))),
+        ],
+      ),
     );
   }
 }
 
-// --- REUSABLE CONTROL BUTTON WIDGET ---
-class ControlTile extends StatelessWidget {
-  final String label;
-  final String status;
-  final bool isOn;
-  final IconData icon;
-  final VoidCallback onTap;
+class VehicleTypeSelector extends StatelessWidget {
+  final bool isElectric;
+  final Function(bool) onTypeChanged;
 
-  const ControlTile({
-    super.key,
-    required this.label,
-    required this.status,
-    required this.isOn,
-    required this.icon,
-    required this.onTap,
+  const VehicleTypeSelector({
+    super.key, 
+    required this.isElectric, 
+    required this.onTypeChanged
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Electric Button
+          GestureDetector(
+            onTap: () => onTypeChanged(true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: isElectric ? cardColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: isElectric ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
+              ),
+              child: Text(
+                "Electric vehicle", 
+                style: TextStyle(
+                  fontWeight: isElectric ? FontWeight.bold : FontWeight.normal, 
+                  fontSize: 12, 
+                  color: isElectric ? textColor : Colors.grey
+                )
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Hybrid Button
+          GestureDetector(
+            onTap: () => onTypeChanged(false),
+            child: Container(
+               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: !isElectric ? cardColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: !isElectric ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
+              ),
+              child: Text(
+                "Hybrid vehicle", 
+                style: TextStyle(
+                  fontWeight: !isElectric ? FontWeight.bold : FontWeight.normal, 
+                  fontSize: 12, 
+                  color: !isElectric ? textColor : Colors.grey
+                )
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CarImageCard extends StatelessWidget {
+  final String imageParams;
+  const CarImageCard({super.key, required this.imageParams});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.black,
+        image: const DecorationImage(
+          image: NetworkImage('https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(Colors.purpleAccent, BlendMode.overlay),
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 20, left: 20,
+            child: Text(imageParams, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          ),
+          Positioned(
+            bottom: 16, right: 16,
+            child: Row(
+              children: [
+                _circleBtn(Icons.remove),
+                const SizedBox(width: 8),
+                _circleBtn(Icons.add),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _circleBtn(IconData icon) {
+    return Container(
+      width: 32, height: 32,
+      decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+      child: Icon(icon, color: Colors.white, size: 16),
+    );
+  }
+}
+
+class FooterCarSelector extends StatelessWidget {
+  const FooterCarSelector({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+
+    return Column(
+      children: [
+        Text("Park ev\nautomatically\nvol.1", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _carIcon(context, Icons.directions_car, true),
+            const SizedBox(width: 10),
+            _carIcon(context, Icons.local_shipping, false),
+            const SizedBox(width: 10),
+            _carIcon(context, Icons.time_to_leave, false),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _carIcon(BuildContext context, IconData icon, bool isSelected) {
+    final cardColor = Theme.of(context).cardColor;
+    final iconColor = Theme.of(context).iconTheme.color;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: isSelected ? Border.all(color: Colors.purple, width: 2) : null,
+        borderRadius: BorderRadius.circular(16)
+      ),
+      child: Icon(icon, color: iconColor),
+    );
+  }
+}
+
+// --- ELECTRIC VEHICLE WIDGETS ---
+
+class ChargingRoutineCard extends StatelessWidget {
+  const ChargingRoutineCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Charging\nRoutine", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              const Icon(Icons.menu, size: 16, color: Colors.grey),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _statRow("Average CD", "45 min", textColor!),
+          _statRow("Peak CP", "10.5 kW", textColor),
+          _statRow("Energy", "350 kWh", textColor),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _miniDonut(Colors.blue, "+69", textColor),
+              _miniDonut(Colors.purpleAccent, "+58", textColor),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String label, String val, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(val, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniDonut(Color color, String text, Color textColor) {
+    return SizedBox(
+      width: 30, height: 30,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(value: 0.7, color: color, strokeWidth: 3, backgroundColor: color.withOpacity(0.2)),
+          Text(text, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: textColor)),
+        ],
+      ),
+    );
+  }
+}
+
+class VoltageDialCard extends StatelessWidget {
+  const VoltageDialCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        children: [
+          const Align(alignment: Alignment.centerRight, child: Icon(Icons.more_horiz, size: 16, color: Colors.grey)),
+          const SizedBox(height: 10),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 90, height: 90,
+                child: CircularProgressIndicator(
+                  value: 0.6,
+                  strokeWidth: 8,
+                  color: const Color(0xFF6E4AFF),
+                  backgroundColor: Colors.grey.shade200,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Column(
+                children: [
+                  const Text("VOLTAGE", style: TextStyle(fontSize: 8, color: Colors.grey)),
+                  Text("250\u1D5B", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                ],
+              )
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text("240V", style: TextStyle(color: Colors.grey, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+}
+
+class QuickStatsRow extends StatelessWidget {
+  const QuickStatsRow({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _statItem(context, Icons.check, Colors.purpleAccent, "-120v", "Less than last week"),
+        _statItem(context, Icons.battery_charging_full, Colors.blue, "16 times", "This month"),
+        _statItem(context, Icons.text_fields, Colors.purple, "+17%", "Last week"),
+      ],
+    );
+  }
+
+  Widget _statItem(BuildContext context, IconData icon, Color color, String bigText, String subText) {
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(20),
-        height: 110, // Fixed height for uniformity
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          // Logic: Cyan if ON, Dark Grey if OFF
-          color: isOn ? const Color(0xFF00F0FF) : const Color(0xFF1E2430),
-          borderRadius: BorderRadius.circular(20),
+          color: Theme.of(context).cardColor, 
+          borderRadius: BorderRadius.circular(16)
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top Row: Label and Toggle Switch
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Icon (Optional - added for clarity since plain text can be boring)
-                // If you want EXACTLY like image (no icon, just text), remove this Icon widget
-                // and just keep the text.
-                // However, the image shows a Switch widget.
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isOn ? Colors.black : Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                // Custom Toggle Switch Visual
-                Container(
-                  width: 24,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isOn
-                        ? Colors.black.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isOn
-                          ? Colors.black.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 200),
-                        top: isOn ? 22 : 2, // Move circle up/down
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: isOn ? Colors.black : Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+              child: Icon(icon, color: Colors.white, size: 14),
             ),
-
-            // Bottom Row: Status Text
-            Text(
-              status,
-              style: TextStyle(
-                color: isOn ? Colors.black.withOpacity(0.7) : Colors.grey,
-                fontSize: 14,
-              ),
-            ),
+            const SizedBox(height: 8),
+            Text(bigText, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.bodyMedium!.color)),
+            Text(subText, style: const TextStyle(fontSize: 9, color: Colors.grey, overflow: TextOverflow.ellipsis), maxLines: 1),
           ],
         ),
       ),
+    );
+  }
+}
+
+class ChargeHistoryCard extends StatelessWidget {
+  const ChargeHistoryCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      height: 180,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Charge\nHistory", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text("insights", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text("\$42.75", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                ],
+              )
+            ],
+          ),
+          const Spacer(),
+          SizedBox(
+            height: 60,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: SimpleWavePainter(color: textColor!),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Sun", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Mon", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Tue", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Wed", style: TextStyle(fontSize: 10, color: Colors.grey)),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class SimpleWavePainter extends CustomPainter {
+  final Color color;
+  SimpleWavePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = color.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    Path path = Path();
+    path.moveTo(0, size.height * 0.8);
+    path.quadraticBezierTo(size.width * 0.25, size.height, size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(size.width * 0.75, 0, size.width, size.height * 0.4);
+
+    canvas.drawPath(path, paint);
+
+    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.28), 4, Paint()..color = Colors.blue);
+
+    TextPainter tp = TextPainter(
+      text: TextSpan(text: "+350 kWh", style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      textDirection: TextDirection.ltr
+    );
+    tp.layout();
+    tp.paint(canvas, Offset(size.width * 0.65, 0));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class ChargingPowerSection extends StatelessWidget {
+  const ChargingPowerSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : const Color(0xFFEBEBF0);
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    final circleTextColor = Theme.of(context).canvasColor; 
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(24)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Charging\nPower »", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w300, color: textColor)),
+              const Text("J1772\nL.1-2", textAlign: TextAlign.right, style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 5),
+          const Text("Power Output 19.2 kW", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          const SizedBox(height: 20),
+          Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 140, height: 140,
+                  child: CircularProgressIndicator(
+                    value: 0.75,
+                    strokeWidth: 12,
+                    color: const Color(0xFF6E4AFF),
+                    backgroundColor: Theme.of(context).cardColor,
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Level 2", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    const Text("10 to 20 miles", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text("240V", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
+                  ],
+                ),
+                const Positioned(top: 10, child: Icon(Icons.bolt, size: 16, color: Colors.grey)),
+                const Positioned(left: 10, child: Icon(Icons.ev_station, size: 16, color: Colors.grey)),
+                const Positioned(right: 10, child: Icon(Icons.electrical_services, size: 16, color: Colors.grey)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "include J1772 (for Level 1 and 2), CHAdeMO, CCS Combo, and Supercharger.",
+            style: TextStyle(color: Colors.grey, height: 1.5),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: circleTextColor, shape: BoxShape.circle),
+              child: Icon(Icons.arrow_outward, color: Theme.of(context).cardColor, size: 16),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class PowerAnalyticsCard extends StatelessWidget {
+  const PowerAnalyticsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    final buttonColor = Theme.of(context).canvasColor; 
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Power Analytics", style: TextStyle(fontSize: 12, color: textColor)),
+        const SizedBox(height: 5),
+        Text("480V DC", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+        const Text("● 60 to 80 miles", style: TextStyle(color: Colors.purple, fontSize: 12)),
+        const SizedBox(height: 15),
+        Stack(
+          children: [
+            Container(height: 10, color: Colors.grey.shade300),
+            Container(height: 10, width: 250, color: Colors.purple),
+            Container(height: 10, width: 120, color: Colors.cyanAccent.withOpacity(0.5)),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("read more", style: TextStyle(color: Theme.of(context).cardColor)),
+              Icon(Icons.double_arrow, color: Theme.of(context).cardColor, size: 16)
+            ],
+          ),
+        )
+      ],
+    );
+  }
+}
+
+// --- HYBRID VEHICLE WIDGETS ---
+
+class HybridFuelCard extends StatelessWidget {
+  const HybridFuelCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Fuel & \nBattery", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              const Icon(Icons.local_gas_station, size: 16, color: Colors.grey),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _statRow("Avg MPG", "48 mpg", textColor!),
+          _statRow("Range", "520 mi", textColor),
+          _statRow("EV Mode", "45 mi", textColor),
+          const SizedBox(height: 12),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+               // Fuel Icon
+              Icon(Icons.water_drop, color: Colors.amber, size: 24),
+              // Battery Icon
+              Icon(Icons.battery_charging_full, color: Colors.green, size: 24),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String label, String val, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(val, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColor)),
+        ],
+      ),
+    );
+  }
+}
+
+class FuelGaugeCard extends StatelessWidget {
+  const FuelGaugeCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        children: [
+          const Align(alignment: Alignment.centerRight, child: Icon(Icons.more_horiz, size: 16, color: Colors.grey)),
+          const SizedBox(height: 10),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 90, height: 90,
+                child: CircularProgressIndicator(
+                  value: 0.8,
+                  strokeWidth: 8,
+                  color: Colors.amber,
+                  backgroundColor: Colors.grey.shade200,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Column(
+                children: [
+                  const Text("FUEL", style: TextStyle(fontSize: 8, color: Colors.grey)),
+                  Text("80%", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                ],
+              )
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text("Regular Unleaded", style: TextStyle(color: Colors.grey, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+}
+
+class HybridQuickStatsRow extends StatelessWidget {
+  const HybridQuickStatsRow({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _statItem(context, Icons.oil_barrel, Colors.amber, "20%", "Oil Life"),
+        _statItem(context, Icons.speed, Colors.redAccent, "42psi", "Tire Pressure"),
+        _statItem(context, Icons.eco, Colors.green, "96", "Eco Score"),
+      ],
+    );
+  }
+
+  Widget _statItem(BuildContext context, IconData icon, Color color, String bigText, String subText) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor, 
+          borderRadius: BorderRadius.circular(16)
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+              child: Icon(icon, color: Colors.white, size: 14),
+            ),
+            const SizedBox(height: 8),
+            Text(bigText, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.bodyMedium!.color)),
+            Text(subText, style: const TextStyle(fontSize: 9, color: Colors.grey, overflow: TextOverflow.ellipsis), maxLines: 1),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FuelHistoryCard extends StatelessWidget {
+  const FuelHistoryCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      height: 180,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(24)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Fuel\nExpenses", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text("This Month", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  Text("\$85.50", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                ],
+              )
+            ],
+          ),
+          const Spacer(),
+          // Reusing wave painter but with different color
+          SizedBox(
+            height: 60,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: SimpleWavePainter(color: Colors.amber),
+            ),
+          ),
+          const SizedBox(height: 10),
+           const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Wk 1", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Wk 2", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Wk 3", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text("Wk 4", style: TextStyle(fontSize: 10, color: Colors.grey)),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class EnginePowerSection extends StatelessWidget {
+  const EnginePowerSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : const Color(0xFFEBEBF0);
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    final circleTextColor = Theme.of(context).canvasColor; 
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(24)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Engine\nOutput »", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w300, color: textColor)),
+              const Text("2.0L\n4-Cyl", textAlign: TextAlign.right, style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 5),
+          const Text("Combined 204 hp", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          const SizedBox(height: 20),
+          Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 140, height: 140,
+                  child: CircularProgressIndicator(
+                    value: 0.4,
+                    strokeWidth: 12,
+                    color: Colors.redAccent,
+                    backgroundColor: Theme.of(context).cardColor,
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("RPM", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    const Text("Driving", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text("2.4k", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Internal Combustion Engine active. Regenerative braking enabled.",
+            style: TextStyle(color: Colors.grey, height: 1.5),
+          ),
+           Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: circleTextColor, shape: BoxShape.circle),
+              child: Icon(Icons.arrow_outward, color: Theme.of(context).cardColor, size: 16),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class HybridAnalyticsCard extends StatelessWidget {
+  const HybridAnalyticsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyMedium!.color;
+    final buttonColor = Theme.of(context).canvasColor; 
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Drive Analytics", style: TextStyle(fontSize: 12, color: textColor)),
+        const SizedBox(height: 5),
+        Text("Hybrid Mode", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+        const Text("● Efficiency 48 MPG", style: TextStyle(color: Colors.green, fontSize: 12)),
+        const SizedBox(height: 15),
+        Stack(
+          children: [
+            Container(height: 10, color: Colors.grey.shade300),
+            Container(height: 10, width: 280, color: Colors.green),
+            Container(height: 10, width: 100, color: Colors.amber.withOpacity(0.5)),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("full report", style: TextStyle(color: Theme.of(context).cardColor)),
+              Icon(Icons.double_arrow, color: Theme.of(context).cardColor, size: 16)
+            ],
+          ),
+        )
+      ],
     );
   }
 }

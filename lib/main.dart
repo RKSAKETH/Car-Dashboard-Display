@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
 
 void main() {
@@ -13,14 +12,10 @@ class CarDashboardApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Car Dashboard',
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-        primaryColor: const Color(0xFFC6FF00), // Neon Lime
-        cardColor: const Color(0xFF1C1C1E),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFC6FF00),
-          secondary: Color(0xFFC6FF00),
+        scaffoldBackgroundColor: const Color(0xFF050505),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontFamily: 'Arial', color: Colors.white),
         ),
       ),
       home: const DashboardScreen(),
@@ -33,44 +28,57 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive layout: SingleChildScrollView handles overflow
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Header (Weather & Profile)
-              _buildHeader(),
-              const SizedBox(height: 20),
-
-              // 2. Emergency Bar
-              _buildEmergencyBar(),
-              const SizedBox(height: 20),
-
-              // 3. Car Visuals & Lock Controls
-              _buildCarControlSection(),
-              const SizedBox(height: 20),
-
-              // 4. Speedometer & Gauges
-              _buildGaugeSection(),
-              const SizedBox(height: 20),
-
-              // 5. Climate Control Slider
-              _buildClimateControl(),
-              const SizedBox(height: 20),
-
-              // 6. Map Section
-              _buildMapSection(context),
-              const SizedBox(height: 20),
-
-              // 7. Calendar
-              _buildCalendarSection(),
-              const SizedBox(height: 20),
-
-              // 8. Grid Controls (AC, Music, etc.)
-              _buildControlGrid(),
-              const SizedBox(height: 20),
+              // Top Row: Face ID (Large) + Column (Time Stats & Clock)
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Face ID Card
+                    Expanded(
+                      flex: 4,
+                      child: _buildFaceIdCard(),
+                    ),
+                    const SizedBox(width: 12),
+                    // Right Column: Stats & Clock
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        children: [
+                          _buildAvgTimeCard(),
+                          const SizedBox(height: 12),
+                          Expanded(child: _buildClockCard()),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Middle Row: Map & Navigation
+              Row(
+                children: [
+                  Expanded(child: _buildMapCard()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildNavCard()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Bottom Section: Car Stats & Music
+              // Stacking vertically for mobile width
+              _buildCarStatsCard(),
+              const SizedBox(height: 12),
+              _buildMusicPlayerCard(),
             ],
           ),
         ),
@@ -78,287 +86,326 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Climate", style: TextStyle(color: Colors.grey, fontSize: 12)),
-            Row(
-              children: const [
-                Text("23°C", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                SizedBox(width: 8),
-                Icon(CupertinoIcons.thermometer, color: Color(0xFFC6FF00), size: 18),
+  // --- Widget Components ---
+
+  Widget _buildAvgTimeCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(color: Colors.white, fontSize: 16),
+              children: [
+                TextSpan(text: "23.6 ", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                TextSpan(text: "minutes", style: TextStyle(color: Colors.grey)),
               ],
             ),
-            const Text("Window Closed", style: TextStyle(color: Colors.grey, fontSize: 10)),
-          ],
-        ),
-        Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: const [
-                Text("25° C", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text("Rainy", style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
+          ),
+          const SizedBox(height: 4),
+          const Text("Average time in the car.", style: TextStyle(color: Colors.grey, fontSize: 10)),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 40,
+            child: CustomPaint(
+              size: const Size(double.infinity, 40),
+              painter: ChartPainter(),
             ),
-            const SizedBox(width: 12),
-            const CircleAvatar(
-              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=5'), // Placeholder
-              radius: 18,
-            ),
-          ],
-        )
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildEmergencyBar() {
+  Widget _buildFaceIdCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
+        // Gradient simulates the image aesthetic
+        gradient: const LinearGradient(
+          colors: [Color(0xFFD49C44), Color(0xFF6E4F23)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.red.withOpacity(0.2), shape: BoxShape.circle),
-            child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+          // Simulate the blurry face image
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Opacity(
+                opacity: 0.3,
+                child: Image.network(
+                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, o, s) => Container(color: Colors.black26),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("Emergency", style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("Switch On only in emergency case", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  ),
+                  child: const Icon(Icons.lock, color: Colors.white, size: 20),
+                ),
+                const Spacer(),
+                const Text("Face Recognized", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text("All doors locked.", style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
-          CupertinoSwitch(
-            value: false,
-            onChanged: (v) {},
-            activeColor: Colors.red,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClockCard() {
+    return Container(
+      decoration: _cardDecoration(),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Clock Face ticks
+          CustomPaint(
+            size: const Size(80, 80),
+            painter: ClockDialPainter(),
+          ),
+          // Hands (Simulated)
+          Transform.rotate(
+            angle: -0.5,
+            child: Container(width: 4, height: 35, color: Colors.orange, margin: const EdgeInsets.only(bottom: 30)),
+          ),
+          Transform.rotate(
+            angle: 2.0,
+            child: Container(width: 4, height: 25, color: Colors.white, margin: const EdgeInsets.only(bottom: 20)),
+          ),
+          Container(
+            width: 8, height: 8,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          ),
+          const Positioned(
+            bottom: 12,
+            child: Text("07:23", style: TextStyle(color: Colors.white, fontSize: 14)),
           )
         ],
       ),
     );
   }
 
-  Widget _buildCarControlSection() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Background Glow
-        Container(
-          height: 180,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [const Color(0xFFC6FF00).withOpacity(0.15), Colors.transparent],
-              radius: 0.7,
-            ),
-          ),
-        ),
-        // Car Image (Placeholder icon used for portability)
-        const Icon(CupertinoIcons.car_detailed, size: 140, color: Colors.grey),
-        
-        // Controls around the car
-        Positioned(
-          left: 10,
-          child: _buildCircleBtn(Icons.lock_outline),
-        ),
-        Positioned(
-          right: 10,
-          child: _buildCircleBtn(Icons.lock_open, active: true),
-        ),
-        Positioned(
-          top: 0,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.arrow_left, color: Color(0xFFC6FF00)),
-              SizedBox(width: 80),
-              Icon(Icons.arrow_right, color: Color(0xFFC6FF00)),
-            ],
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildGaugeSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildSmallGauge("Petrol", "65%", 0.65, Icons.local_gas_station),
-        // Main Speedometer
-        SizedBox(
-          width: 150,
-          height: 150,
-          child: CustomPaint(
-            painter: SpeedometerPainter(),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text("57", style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text("Km/h", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        _buildSmallGauge("Battery", "60%", 0.6, Icons.battery_charging_full),
-      ],
-    );
-  }
-
-  Widget _buildSmallGauge(String label, String value, double percent, IconData icon) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 60,
-          width: 60,
-          child: Stack(
-            children: [
-              CircularProgressIndicator(
-                value: percent,
-                strokeWidth: 6,
-                backgroundColor: Colors.grey[800],
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFC6FF00)),
-              ),
-              Center(child: Icon(icon, size: 20, color: Colors.white)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildClimateControl() {
+  Widget _buildNavCard() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(20),
-      ),
+      height: 140, // Fixed height for alignment
+      decoration: _cardDecoration(),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text("10°C", style: TextStyle(color: Colors.grey)),
-              Text("Climate Control", style: TextStyle(fontWeight: FontWeight.bold)),
-              Text("40°C", style: TextStyle(color: Colors.grey)),
+            children: [
+              const Icon(Icons.turn_right, size: 32, color: Colors.white),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text("240m", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text("Turn to right.", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              )
             ],
           ),
-          SliderTheme(
-            data: SliderThemeData(
-              trackHeight: 2,
-              activeTrackColor: const Color(0xFFC6FF00),
-              inactiveTrackColor: Colors.grey[800],
-              thumbColor: const Color(0xFFC6FF00),
-              overlayColor: const Color(0xFFC6FF00).withOpacity(0.2),
-            ),
-            child: Slider(
-              value: 0.5,
-              onChanged: (val) {},
-            ),
-          ),
+          const Spacer(),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: Colors.grey[800], shape: BoxShape.circle),
+                child: const Icon(Icons.location_on_outlined, size: 14, color: Colors.orange),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text("Manta St, 176W.", style: TextStyle(color: Colors.orange, fontSize: 12)),
+                    Text("23 minutes without traffic.", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                  ],
+                ),
+              ),
+            ],
+          )
         ],
       ),
     );
   }
 
-  Widget _buildMapSection(BuildContext context) {
+  Widget _buildMapCard() {
     return Container(
-      height: 250,
-      width: double.infinity,
+      height: 140,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF151515),
+        borderRadius: BorderRadius.circular(24),
         image: const DecorationImage(
-          // Using a dark map placeholder pattern
-          image: NetworkImage("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.png"), // Placeholder
+          // Using a subtle pattern to mimic the dot map
+          image: NetworkImage("https://www.transparenttextures.com/patterns/dark-matter.png"),
+          opacity: 0.2,
           fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Colors.black54, BlendMode.darken),
         ),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Simulated Route Line
-          Center(
+          Align(
+            alignment: Alignment.topRight,
             child: Container(
-              width: 4,
-              height: 100,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.grey, const Color(0xFFC6FF00)],
-                ),
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+              child: const Icon(Icons.swap_calls, color: Colors.black, size: 16),
+            ),
+          ),
+          const Spacer(),
+          // Radar ripple effect simulation
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white12),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Container(
+                width: 6, height: 6,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
               ),
             ),
           ),
-          Center(
-            child: Icon(Icons.navigation, color: const Color(0xFFC6FF00), size: 30),
-          ),
-          
-          // Search Bar
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.black45,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Row(
-                children: const [
-                  Icon(Icons.search, color: Colors.white70),
-                  SizedBox(width: 10),
-                  Text("Search Destination", style: TextStyle(color: Colors.white70)),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: 8),
+          const Text("Hutchinson, Kansas, US", style: TextStyle(color: Colors.orange, fontSize: 12)),
+          const Text("Scheduled Trip", style: TextStyle(color: Colors.white54, fontSize: 10)),
+        ],
+      ),
+    );
+  }
 
-          // Bottom Info
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("Club Town Gardens", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("NYC, 3 min away", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  ],
+  Widget _buildCarStatsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          // Car Image placeholder
+          Expanded(
+            flex: 2,
+            child: Container(
+              height: 100,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  // Placeholder for top-down car view
+                  image: NetworkImage("https://cdn-icons-png.flaticon.com/512/3202/3202926.png"),
+                  colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                  fit: BoxFit.contain
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC6FF00),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text("GO", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Stats Column
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStatRow("62.7", "km/h", "Average speed"),
+                const SizedBox(height: 12),
+                _buildStatRow("13.9", "HP", "Engine brth power", color: Colors.orange),
+                const SizedBox(height: 12),
+                _buildStatRow("20.4", "N.m", "Torque ratio", color: Colors.orange),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String val, String unit, String label, {Color color = Colors.white}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(text: "$val ", style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+              TextSpan(text: unit, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            ],
+          ),
+        ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildMusicPlayerCard() {
+    return Container(
+      height: 140,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2C2C2C), Color(0xFF8B4513)], // Dark to Brown/Orange
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: CircleAvatar(
+              radius: 40,
+              backgroundImage: const NetworkImage("https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png"),
+              backgroundColor: Colors.black,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.orange, width: 2),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Blinding Lights", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text("The Weeknd", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.skip_previous, color: Colors.white70),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(border: Border.all(color: Colors.white), shape: BoxShape.circle),
+                      child: const Icon(Icons.bar_chart, size: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.skip_next, color: Colors.white70),
+                  ],
                 )
               ],
             ),
@@ -368,148 +415,77 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCalendarSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text("My Calendar", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              Icon(Icons.more_horiz, color: Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 5),
-          const Text("5 Aug - 2022", style: TextStyle(color: Colors.grey, fontSize: 12)),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 40,
-                color: const Color(0xFFC6FF00),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text("Meeting with clients", style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("5:00 - 6:20", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              )
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildControlGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: [
-        _buildGridBtn(Icons.ac_unit, "Air Conditioner"),
-        _buildGridBtn(Icons.music_note, "Music"),
-        _buildGridBtn(Icons.bluetooth, "Bluetooth"),
-        _buildGridBtn(CupertinoIcons.chat_bubble_text_fill, "Message"),
-        _buildGridBtn(Icons.chair, "Seat Temp: 20°"),
-        _buildGridBtn(Icons.settings, "Settings"),
-      ],
-    );
-  }
-
-  Widget _buildGridBtn(IconData icon, String label) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 28),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCircleBtn(IconData icon, {bool active = false}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active ? const Color(0xFFC6FF00) : const Color(0xFF2C2C2E),
-        boxShadow: active
-            ? [BoxShadow(color: const Color(0xFFC6FF00).withOpacity(0.5), blurRadius: 10)]
-            : [],
-      ),
-      child: Icon(
-        icon,
-        color: active ? Colors.black : Colors.grey,
-        size: 20,
-      ),
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: const Color(0xFF151515),
+      borderRadius: BorderRadius.circular(24),
     );
   }
 }
 
-// Custom Painter for the Speedometer Arcs
-class SpeedometerPainter extends CustomPainter {
+// --- Custom Painters for Charts and Clock ---
+
+class ChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.grey[800]!;
+    Paint linePaint = Paint()
+      ..color = Colors.orange
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
 
-    Offset center = Offset(size.width / 2, size.height / 2);
+    Path path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.quadraticBezierTo(size.width * 0.2, size.height * 0.8, size.width * 0.4, size.height * 0.5);
+    path.quadraticBezierTo(size.width * 0.6, size.height * 0.2, size.width * 0.8, size.height * 0.6);
+    path.lineTo(size.width, 0);
+
+    // Gradient fill below chart
+    Path fillPath = Path.from(path);
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
+    fillPath.close();
+
+    Paint fillPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [Colors.orange.withOpacity(0.3), Colors.transparent],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class ClockDialPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint tickPaint = Paint()..color = Colors.grey.withOpacity(0.5)..strokeWidth = 2;
+    Paint highlightPaint = Paint()..color = Colors.white..strokeWidth = 2;
+    
+    double centerX = size.width / 2;
+    double centerY = size.height / 2;
     double radius = size.width / 2;
 
-    // Draw Ticks
-    for (int i = 0; i < 40; i++) {
-      double angle = (i * 9) * (math.pi / 180); // Full circle
-      // Only draw bottom 2/3rds roughly
-      if (angle > math.pi / 4 && angle < math.pi * 2.75) { 
-        // Skip bottom area
-      }
+    for (int i = 0; i < 60; i+=2) { // 30 ticks
+      double angle = (i * 6) * math.pi / 180;
+      double outerR = radius;
+      double innerR = radius - 5;
       
-       double startLength = radius - 5;
-       if(i % 5 == 0) startLength = radius - 10;
+      bool isHour = i % 5 == 0;
+      Paint p = isHour ? highlightPaint : tickPaint;
+      if(isHour) innerR -= 4;
 
-       double x1 = center.dx + radius * math.cos(angle);
-       double y1 = center.dy + radius * math.sin(angle);
-       double x2 = center.dx + startLength * math.cos(angle);
-       double y2 = center.dy + startLength * math.sin(angle);
-       
-       canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
-    }
-    
-    // Active Arc
-    Paint activePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..color = const Color(0xFFC6FF00)
-      ..strokeCap = StrokeCap.round;
+      double x1 = centerX + innerR * math.cos(angle);
+      double y1 = centerY + innerR * math.sin(angle);
+      double x2 = centerX + outerR * math.cos(angle);
+      double y2 = centerY + outerR * math.sin(angle);
       
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 20), 
-      math.pi - 0.5, 
-      2.5, 
-      false, 
-      activePaint
-    );
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), p);
+    }
   }
 
   @override

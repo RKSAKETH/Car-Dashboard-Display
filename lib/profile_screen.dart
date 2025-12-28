@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'car_loading_screen.dart'; // Import the car loading animation
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -98,7 +99,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ListTile(
                   leading: const Icon(Icons.settings),
                   title: const Text("Settings"),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CarLoadingScreen(
+                          message: "Loading Settings..",
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.history),

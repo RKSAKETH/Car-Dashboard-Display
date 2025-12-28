@@ -14,19 +14,24 @@ class _ControlsScreenState extends State<ControlsScreen> {
   bool isTrunkOpen = false;
   bool isDoorsOpen = true;
 
+  // New state variable for Theme Mode
+  bool isDarkMode = true;
+
   @override
   Widget build(BuildContext context) {
     // Screen dimensions
     final size = MediaQuery.of(context).size;
     final double padding = 24.0;
 
-    // We use a specific Theme for this screen to match the Neon/Dark look
+    // Define colors based on mode
+    final Color backgroundColor = isDarkMode ? const Color(0xFF030810) : Colors.white;
+    final Color textColor = isDarkMode ? Colors.white : Colors.black;
+    final Color tileInactiveColor = isDarkMode ? const Color(0xFF1E2430) : Colors.grey.shade200;
+
     return Theme(
-      data: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF030810),
-      ),
+      data: isDarkMode ? ThemeData.dark() : ThemeData.light(),
       child: Scaffold(
-        backgroundColor: const Color(0xFF030810),
+        backgroundColor: backgroundColor,
         body: SafeArea(
           child: Column(
             children: [
@@ -38,15 +43,32 @@ class _ControlsScreenState extends State<ControlsScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      // Header
-                      const Text(
-                        "Controls",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
+                      // Header with Theme Toggle
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Controls",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          // Theme Toggle Button
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                isDarkMode = !isDarkMode;
+                              });
+                            },
+                            icon: Icon(
+                              isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 40),
@@ -64,9 +86,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFF00F0FF,
-                                    ).withOpacity(0.15),
+                                    color: const Color(0xFF00F0FF).withOpacity(0.15),
                                     blurRadius: 100,
                                     spreadRadius: 10,
                                   ),
@@ -74,14 +94,15 @@ class _ControlsScreenState extends State<ControlsScreen> {
                               ),
                             ),
                             // 2. Car Image
-                            // Ensure you have this image in your assets folder
                             SizedBox(
                               height: 400,
                               width: size.width * 0.8,
                               child: Image.asset(
-                                'assets/car_top_view.png', // Make sure this file exists!
+                                'assets/car_top_view.png',
                                 fit: BoxFit.contain,
-                                // Removed color tint so original image shows
+                                // Add logic to invert color if the image is a silhouette,
+                                // remove color param if it's a real photo.
+                                // color: isDarkMode ? null : Colors.black, 
                               ),
                             ),
                           ],
@@ -99,9 +120,10 @@ class _ControlsScreenState extends State<ControlsScreen> {
                               label: "Engine",
                               status: isEngineOn ? "started" : "off",
                               isOn: isEngineOn,
+                              inactiveColor: tileInactiveColor,
+                              textColor: textColor,
                               icon: Icons.power_settings_new,
-                              onTap: () =>
-                                  setState(() => isEngineOn = !isEngineOn),
+                              onTap: () => setState(() => isEngineOn = !isEngineOn),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -110,9 +132,10 @@ class _ControlsScreenState extends State<ControlsScreen> {
                               label: "Climate",
                               status: isClimateOn ? "on" : "off",
                               isOn: isClimateOn,
+                              inactiveColor: tileInactiveColor,
+                              textColor: textColor,
                               icon: Icons.thermostat,
-                              onTap: () =>
-                                  setState(() => isClimateOn = !isClimateOn),
+                              onTap: () => setState(() => isClimateOn = !isClimateOn),
                             ),
                           ),
                         ],
@@ -126,9 +149,10 @@ class _ControlsScreenState extends State<ControlsScreen> {
                               label: "Trunk",
                               status: isTrunkOpen ? "opened" : "closed",
                               isOn: isTrunkOpen,
+                              inactiveColor: tileInactiveColor,
+                              textColor: textColor,
                               icon: Icons.directions_car,
-                              onTap: () =>
-                                  setState(() => isTrunkOpen = !isTrunkOpen),
+                              onTap: () => setState(() => isTrunkOpen = !isTrunkOpen),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -137,20 +161,19 @@ class _ControlsScreenState extends State<ControlsScreen> {
                               label: "Doors",
                               status: isDoorsOpen ? "opened" : "closed",
                               isOn: isDoorsOpen,
+                              inactiveColor: tileInactiveColor,
+                              textColor: textColor,
                               icon: Icons.lock_open,
-                              onTap: () =>
-                                  setState(() => isDoorsOpen = !isDoorsOpen),
+                              onTap: () => setState(() => isDoorsOpen = !isDoorsOpen),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 40), // Spacing at bottom
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
               ),
-              // Note: I removed the custom bottom container here because
-              // we are using the main app's real BottomNavigationBar now.
             ],
           ),
         ),
@@ -165,6 +188,8 @@ class ControlTile extends StatelessWidget {
   final String status;
   final bool isOn;
   final IconData icon;
+  final Color inactiveColor;
+  final Color textColor;
   final VoidCallback onTap;
 
   const ControlTile({
@@ -173,6 +198,8 @@ class ControlTile extends StatelessWidget {
     required this.status,
     required this.isOn,
     required this.icon,
+    required this.inactiveColor,
+    required this.textColor,
     required this.onTap,
   });
 
@@ -180,12 +207,13 @@ class ControlTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(20),
-        height: 110, // Fixed height for uniformity
+        height: 110,
         decoration: BoxDecoration(
-          // Logic: Cyan if ON, Dark Grey if OFF
-          color: isOn ? const Color(0xFF00F0FF) : const Color(0xFF1E2430),
+          // Cyan if ON, Dynamic Inactive Color if OFF
+          color: isOn ? const Color(0xFF00F0FF) : inactiveColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -199,7 +227,8 @@ class ControlTile extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: isOn ? Colors.black : Colors.white,
+                    // If ON, text is black. If OFF, text adapts to theme.
+                    color: isOn ? Colors.black : textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -211,12 +240,12 @@ class ControlTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isOn
                         ? Colors.black.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.3),
+                        : Colors.black.withOpacity(0.1), // Adjusted for visibility
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isOn
                           ? Colors.black.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.1),
+                          : textColor.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -225,11 +254,12 @@ class ControlTile extends StatelessWidget {
                     children: [
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 200),
-                        top: isOn ? 22 : 2, // Move circle up/down
+                        top: isOn ? 22 : 2,
                         child: Container(
                           width: 18,
                           height: 18,
                           decoration: BoxDecoration(
+                            // Circle color logic
                             color: isOn ? Colors.black : Colors.grey,
                             shape: BoxShape.circle,
                           ),

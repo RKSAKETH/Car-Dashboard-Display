@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'controls_screen.dart'; // Import the file we created above
+import 'map_screen.dart';
+import 'profile_screen.dart';
 
 void main() {
   runApp(const ElechargeApp());
@@ -92,8 +94,8 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
       // Index 1: The Controls Screen (Imported from controls_screen.dart)
       const ControlsScreen(),
       // Index 2: Placeholders for other tabs
-      const Center(child: Text("Map Screen Placeholder")),
-      const Center(child: Text("Profile Screen Placeholder")),
+      const MapScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(

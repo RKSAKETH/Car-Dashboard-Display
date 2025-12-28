@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:confetti/confetti.dart';
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  void _onNavigatePressed() {
+    _confettiController.play();
+    // Add your navigation logic here
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +40,7 @@ class MapScreen extends StatelessWidget {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/map_mock.png"), // ✅ FIXED
+                image: AssetImage("assets/map_mock.png"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -113,7 +138,7 @@ class MapScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: _onNavigatePressed,
                       icon: const Icon(Icons.navigation),
                       label: const Text("Navigate to Charger"),
                       style: ElevatedButton.styleFrom(
@@ -138,6 +163,28 @@ class MapScreen extends StatelessWidget {
               backgroundColor: Colors.red,
               onPressed: () {},
               child: const Icon(Icons.sos),
+            ),
+          ),
+
+          // ================= CONFETTI EFFECT =================
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: 3.14 / 2, // Down
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              gravity: 0.3,
+              blastDirectionality: BlastDirectionality.explosive,
+              colors: const [
+                Color(0xFF6E4AFF),
+                Colors.blue,
+                Colors.green,
+                Colors.yellow,
+                Colors.red,
+                Colors.pink,
+                Colors.orange,
+              ],
             ),
           ),
         ],
